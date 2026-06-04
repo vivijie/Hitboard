@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hitboard Creator~1.09（物料清单更新）</title>
+    <title>Hitboard Creator~1.10（默认七星布局+辅助线加粗）</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <style>
         /* 样式与上一版本完全相同，省略以节省篇幅，实际代码中完整保留 */
@@ -171,16 +171,16 @@
     <div class="control-panel">
         <h2>选项</h2>
 
-        <!-- 左手区域加键选项 -->
+        <!-- 左手区域加键选项（默认勾选七星布局、W+Shift、三角形） -->
         <div class="option-group">
             <h3>左手区域加键选项</h3>
             <div class="radio-group">
                 <div class="radio-row">
-                    <input type="radio" name="directionLayout" id="layoutStandard" value="standard" checked>
+                    <input type="radio" name="directionLayout" id="layoutStandard" value="standard">
                     <label for="layoutStandard">与拳键对称（触感上消熵，减少误操作）</label>
                 </div>
                 <div class="radio-row">
-                    <input type="radio" name="directionLayout" id="layoutExplorer" value="explorer">
+                    <input type="radio" name="directionLayout" id="layoutExplorer" value="explorer" checked>
                     <label for="layoutExplorer">七星布局（方向键调低，可容纳 W 键或 Shift 键）</label>
                 </div>
             </div>
@@ -221,7 +221,7 @@
             <h3>右手区域加键选项</h3>
             <div class="radio-group">
                 <div class="radio-row">
-                    <input type="radio" name="rightHandKeys" id="rightNone" value="none" checked>
+                    <input type="radio" name="rightHandKeys" id="rightNone" value="none">
                     <label for="rightNone">不加键</label>
                 </div>
                 <div class="radio-row">
@@ -233,7 +233,7 @@
                     <label for="rightThumb">加 1键：大拇指右侧</label>
                 </div>
                 <div class="radio-row">
-                    <input type="radio" name="rightHandKeys" id="rightBoth" value="both">
+                    <input type="radio" name="rightHandKeys" id="rightBoth" value="both" checked>
                     <label for="rightBoth">加 2键：食指左侧、大拇指右侧</label>
                 </div>
             </div>
@@ -466,8 +466,8 @@
 
     let magneticEnabled = false, microEnabled = false, dockEnabled = false, reinforcedCoverEnabled = false;
     let joystickEnabled = false;
-    let rightHandMode = 'none';
-    let directionLayout = 'standard';
+    let rightHandMode = 'both';
+    let directionLayout = 'explorer';   // 默认七星布局
     let keyStyle = 'triangle';
     let extraKeySelect = 'both';
     let guideLineMode = 'none';
@@ -655,7 +655,12 @@
     }
     layoutStandard.addEventListener('change', updateDirectionLayout);
     layoutExplorer.addEventListener('change', updateDirectionLayout);
-    keyStyleContainer.style.display = 'none';
+    // 因为默认七星布局，需要显示二级菜单
+    if (directionLayout === 'explorer') {
+        keyStyleContainer.style.display = 'block';
+    } else {
+        keyStyleContainer.style.display = 'none';
+    }
 
     function updateExtraKeySelect() {
         if (extraBoth.checked) extraKeySelect = 'both';
@@ -1060,7 +1065,8 @@
             if (currentGuideMode !== 'none') {
                 const panelCenterX = leftPx + innerW/2, panelCenterY = topPx + innerH/2;
                 eCtx.save();
-                eCtx.strokeStyle = '#000000'; eCtx.lineWidth = 1;
+                eCtx.strokeStyle = '#000000';
+                eCtx.lineWidth = 3; // 辅助线加粗到3px
 
                 for (let idxBtn = 0; idxBtn <= 24; idxBtn++) {
                     if (idxBtn === 3 && rightHandMode !== 'index' && rightHandMode !== 'both') continue;
@@ -1174,13 +1180,13 @@
         const listStartY = prodY + outerH + 60, startX = margin + 30;
         let startY = listStartY;
 
-        // 必选物料（根据新表格更新）
+        // 必选物料
         const baseItems = [
-            { category: '必选', name: 'Hitboard Air 3D 打印套件', qty: '1套', cost: 40, supplier: '自选' },
+            { category: '必选', name: 'Hitboard Air 3D 打印套件', qty: '1套', cost: 50, supplier: '自选' },
             { category: '必选', name: '树莓派 Pico（RP2040 无焊接针脚）', qty: '1个', cost: 10, supplier: '自选' },
             { category: '必选', name: '导线（#30 外径0.56mm）', qty: '4米', cost: 4, supplier: '便民发明' },
             { category: '必选', name: '导电胶按钮（KX-1059 10mm底 5mm粗 9mm高）', qty: '2个', cost: 1, supplier: '惠购之选' },
-            { category: '必选', name: '猎隼mini轴', qty: '16个', cost: 46, supplier: '凯华' },
+            { category: '必选', name: '猎隼mini轴', qty: '17个', cost: 51, supplier: '凯华' },
             { category: '必选', name: '凯华1350矮轴轴座', qty: '20个', cost: 9, supplier: 'YMDK' },
             { category: '必选', name: 'M2*5 螺丝（2mm 直径，5mm 长）', qty: '10颗', cost: 3, supplier: '固万基/以瑟' }
         ];
@@ -1203,10 +1209,10 @@
             optionalItems.push({ category: '选配磁轴', name: '凯华磁轴（星磁 mini）', qty: '4个', cost: 11.9, supplier: '凯华' });
         }
         if (joystickEnabled) {
-            optionalItems.push({ category: '选配摇杆', name: 'J17-B10K PSP 四方向摇杆', qty: '1个', cost: 1, supplier: '一键电子' }); // 供应商改回一键电子
+            optionalItems.push({ category: '选配摇杆', name: 'J17-B10K PSP 四方向摇杆', qty: '1个', cost: 1, supplier: '一键电子' });
         }
         if (dockCheck.checked) {
-            optionalItems.push({ category: '选配Dock', name: 'Dock 3D 打印套件', qty: '1套', cost: 20, supplier: '自选' });
+            optionalItems.push({ category: '选配Dock', name: 'Dock 3D 打印套件', qty: '1套', cost: 30, supplier: '自选' });
             optionalItems.push({ category: '选配Dock', name: '圆形强力磁铁（直径 6x 高度2mm）', qty: '18颗', cost: 6, supplier: '磁悦旗舰店' });
             optionalItems.push({ category: '选配Dock', name: 'M2*5 螺丝（2mm 直径，5mm 长）', qty: '2颗', cost: 3, supplier: '固万基/以瑟' });
             optionalItems.push({ category: '选配Dock', name: 'M2 螺帽（ 1.8mm 高）', qty: '2颗', cost: 3, supplier: '固万基/以瑟' });
