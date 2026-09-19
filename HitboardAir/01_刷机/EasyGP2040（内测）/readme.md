@@ -15,6 +15,8 @@
 
 > 固件文件就是邮件里那个 `.uf2`。
 
+![EasyGP2040](./images/screenshot.png)
+
 ---
 
 ## 二、怎么进设置
