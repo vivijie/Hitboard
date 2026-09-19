@@ -1,3 +1,5 @@
+![EasyGP2040](./images/screenshot.png)
+
 # EasyGP2040 使用说明
 
 > ⚠️ **内测版本**
@@ -15,7 +17,7 @@
 
 > 固件文件就是邮件里那个 `.uf2`。
 
-![EasyGP2040](./images/screenshot.png)
+
 
 ---
 
