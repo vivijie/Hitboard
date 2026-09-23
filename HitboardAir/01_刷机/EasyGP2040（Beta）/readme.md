@@ -1,4 +1,4 @@
-![EasyGP2040](./安装前阅读.png)
+![EasyGP2040](./images/安装前阅读.png)
 
 # EasyGP2040 使用说明
 
