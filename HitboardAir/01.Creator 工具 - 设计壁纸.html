@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hitboard Creator~1.10（默认七星布局+辅助线加粗）</title>
+    <title>Hitboard Creator~1.11（默认七星布局+辅助线加粗+上环形下无辅助线高兼容模式）</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <style>
         /* 样式与上一版本完全相同，省略以节省篇幅，实际代码中完整保留 */
@@ -308,6 +308,10 @@
                         <input type="radio" name="guideLine" id="guideSeparate" value="separate">
                         <label for="guideSeparate">上下壁纸分别使用环形/方形辅助线</label>
                     </div>
+                    <div class="radio-row">
+                        <input type="radio" name="guideLine" id="guideTopCircle" value="topCircle">
+                        <label for="guideTopCircle">上方壁纸使用环形辅助线，下方壁纸不开启辅助线（高兼容性）</label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -570,6 +574,7 @@
     const guideCircle = document.getElementById('guideCircle');
     const guideSquare = document.getElementById('guideSquare');
     const guideSeparate = document.getElementById('guideSeparate');
+    const guideTopCircle = document.getElementById('guideTopCircle');
 
     const themeColors = { dark: { case: '#3a4a5e', panel: '#d9e2ec', button: '#2b3b4c' }, pink: { case: '#cfa3b0', panel: '#f2dbe0', button: '#b48797' } };
     let isPinkTheme = false, userCustomized = false;
@@ -701,11 +706,13 @@
         else if (guideCircle.checked) guideLineMode = 'circle';
         else if (guideSquare.checked) guideLineMode = 'square';
         else if (guideSeparate.checked) guideLineMode = 'separate';
+        else if (guideTopCircle.checked) guideLineMode = 'topCircle';
     }
     guideNone.addEventListener('change', updateGuideLineMode);
     guideCircle.addEventListener('change', updateGuideLineMode);
     guideSquare.addEventListener('change', updateGuideLineMode);
     guideSeparate.addEventListener('change', updateGuideLineMode);
+    guideTopCircle.addEventListener('change', updateGuideLineMode);
 
     function applyDockFollow() {
         if (dockFollowCheck.checked) { dockColor = caseColor; dockInput.value = caseColor; draw(); }
@@ -1035,6 +1042,8 @@
             const leftPx = pos.left, bottomPx = pos.bottom, topPx = exportCanvas.height - bottomPx - innerH;
             let currentGuideMode = guideLineMode;
             if (guideLineMode === 'separate') currentGuideMode = idx === 0 ? 'circle' : 'square';
+            // 高兼容性模式：上方壁纸（idx 0）使用环形辅助线，下方壁纸（idx 1）不开启辅助线
+            else if (guideLineMode === 'topCircle') currentGuideMode = idx === 0 ? 'circle' : 'none';
 
             eCtx.save();
             eCtx.beginPath();
