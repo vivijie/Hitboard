@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hitboard Creator~1.11（默认七星布局+辅助线加粗+上环形下无辅助线高兼容模式）</title>
+    <title>Hitboard Creator~1.12（默认七星布局+拨片按公版盖板图实测+上环形下无辅助线高兼容模式）</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <style>
         /* 样式与上一版本完全相同，省略以节省篇幅，实际代码中完整保留 */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; transition: background-color 0.2s, color 0.2s; }
-        .editor-container { max-width: 1400px; width: 100%; border-radius: 32px; overflow: hidden; display: flex; flex-direction: row; backdrop-filter: blur(2px); transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; position: relative; }
-        .preview-area { flex: 1.2; padding: 40px 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right-width: 1px; border-right-style: solid; transition: background-color 0.2s, border-color 0.2s; }
-        .main-title { font-size: 2.16rem; font-weight: 500; margin-bottom: 24px; letter-spacing: -0.02em; align-self: flex-start; padding-left: 8px; margin-left: 35px; transition: color 0.2s, border-color 0.2s; }
+        .editor-container { max-width: 1400px; width: 100%; border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; backdrop-filter: blur(2px); transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; position: relative; }
+        .editor-body { display: flex; flex-direction: row; }
+        /* 顶栏改为文档流后，产品区顶部空出来了：整组内容（标题 + 产品图 + 提示文字）上移。
+           原先垂直居中时内容起始约在 y=156，现改为顶部对齐 + padding-top 56px，即上移约 100px。
+           想再上下移动就调这个 56px（数值越小越靠上）；顶部对齐可保证任何画布比例下都不会撞到顶栏。 */
+        .preview-area { flex: 1.2; padding: 56px 32px 24px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border-right-width: 1px; border-right-style: solid; transition: background-color 0.2s, border-color 0.2s; }
+        .main-title { font-size: 2.16rem; font-weight: 500; margin-bottom: 24px; letter-spacing: -0.02em; align-self: flex-start; padding-left: 8px; margin-left: 35px; opacity: 0.8; transition: color 0.2s, border-color 0.2s; }
         .editable-name { cursor: pointer; border-bottom-width: 1px; border-bottom-style: dashed; display: inline-block; min-width: 2em; text-align: center; transition: border-color 0.2s, background-color 0.2s; }
         .editable-name:hover { transition: background-color 0.2s; }
         .canvas-wrapper { width: 100%; max-width: 900px; background: #ffffff; border-radius: 33px; box-shadow: 0 4px 16px rgba(0,0,0,0.02); padding: 24px 12px 12px 12px; transition: background-color 0.2s, box-shadow 0.2s; }
@@ -22,7 +26,10 @@
         .hint-text span { display: flex; align-items: center; gap: 6px; }
         .control-panel { width: 360px; padding: 32px 24px; overflow-y: auto; max-height: 800px; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
         .control-panel h2 { font-size: 1.5rem; font-weight: 500; margin-bottom: 28px; transition: color 0.2s, text-shadow 0.2s; }
-        .option-group { margin-bottom: 32px; border-bottom-width: 1px; border-bottom-style: solid; padding-bottom: 24px; transition: border-color 0.2s; }
+        /* 顶层分组做成悬浮圆角卡片（类似 X 右侧栏那种一块块圆角矩形）。
+           只作用于 .control-panel 的直接子级，所以嵌在「壁纸」分组里的 #guideLineContainer
+           不会被再套一层卡片，保持平铺。 */
+        .control-panel > .option-group { margin-bottom: 14px; padding: 16px 16px 18px; border-radius: 16px; transition: background-color 0.2s, box-shadow 0.2s; }
         .option-group h3 { font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; font-weight: 450; transition: color 0.2s; }
         .color-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
         .color-label { font-size: 0.95rem; width: 90px; transition: color 0.2s; }
@@ -52,7 +59,7 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; transition: background-color 0.2s, box-shadow 0.2s; }
         .export-buttons { display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
         .export-btn { border: none; padding: 16px 20px; border-radius: 40px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-width: 1px; border-style: solid; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
-        .footer-note { margin-top: 30px; font-size: 0.7rem; text-align: center; border-top-width: 1px; border-top-style: solid; padding-top: 18px; transition: color 0.2s, border-color 0.2s; }
+        .footer-note { margin-top: 20px; font-size: 0.7rem; text-align: center; padding-top: 2px; transition: color 0.2s; }
         .designer-credit { margin-top: 16px; font-size: 0.8rem; opacity: 0.7; text-align: center; transition: color 0.2s; }
         /* 主题颜色代码与上一版完全相同，此处省略... */
         body { background: #f5f7fa; }
@@ -66,7 +73,7 @@
         .hint-text { background: #f2f6fb; color: #6b7b8f; }
         .control-panel { background: #1e2b3c; color: #eef4fa; }
         .control-panel h2 { color: white; }
-        .option-group { border-bottom-color: #304357; }
+        .control-panel > .option-group { background: #2a3c52; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
         .option-group h3 { color: #8fa5c0; }
         .color-label { color: #d3e0f0; }
         input[type="color"] { border-color: #3c5068; }
@@ -87,7 +94,7 @@
         .export-btn:hover { background: #3a6a91; }
         .export-btn.secondary { background: #2d3e54; border-color: #4c607b; }
         .export-btn.secondary:hover { background: #3c506a; }
-        .footer-note { color: #627a99; border-top-color: #2f4259; }
+        .footer-note { color: #627a99; }
         .designer-credit { color: #a0b2c4; }
         body.theme-pink { background: #ffe4ec; }
         .theme-pink .editor-container { background: #ffffff; box-shadow: 0 20px 40px -12px rgba(255, 120, 160, 0.3); border: 1px solid #ffc0d0; }
@@ -100,7 +107,7 @@
         .theme-pink .hint-text { background: #ffeef4; color: #a87b8b; }
         .theme-pink .control-panel { background: #ffa5b9; color: #ffffff; }
         .theme-pink .control-panel h2 { color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .theme-pink .option-group { border-bottom-color: #ffd0dd; }
+        .theme-pink .control-panel > .option-group { background: #ff8fa8; box-shadow: 0 2px 10px rgba(178,58,94,0.28); }
         .theme-pink .option-group h3 { color: #fff0f5; }
         .theme-pink .color-label { color: #ffffff; }
         .theme-pink input[type="color"] { border-color: #ff99b0; }
@@ -121,23 +128,29 @@
         .theme-pink .export-btn:hover { background: #ff4f7a; }
         .theme-pink .export-btn.secondary { background: #ff8faa; border-color: #ffbfcf; }
         .theme-pink .export-btn.secondary:hover { background: #ff7a9a; }
-        .theme-pink .footer-note { color: #ffffff; border-top-color: #ffd0dd; }
+        .theme-pink .footer-note { color: #ffffff; }
         .theme-pink .designer-credit { color: #d96b8a; }
-        .theme-toggle-wrapper { position: absolute; top: 20px; left: 20px; z-index: 100; }
-        .theme-toggle-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); background: #2f5778; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, transform 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .theme-pink .theme-toggle-btn { background: #ff7f9f; }
-        .theme-toggle-btn:hover { transform: scale(1.05); }
-        .theme-toggle-btn:active { transform: scale(0.95); }
-        .dock-settings { margin-top: 10px; margin-left: 24px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; display: none; }
+        /* 顶栏：只放主题切换控件（圆形按钮 + 文字），靠左。处于正常文档流，不会与画布重叠。
+           顶栏底色是 .editor-container 的白色，两种主题下都是浅底，所以用深色文字与浅色胶囊 */
+        .editor-header { flex: 0 0 auto; height: 72px; padding: 0 32px; display: flex; align-items: center; justify-content: flex-start; }
+        .theme-switch { display: flex; align-items: center; gap: 10px; padding: 5px 16px 5px 7px; border-radius: 999px; background: #f2f6fb; border: 1px solid #e0e6ee; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+        .theme-switch:hover { background: #e8eff8; }
+        .theme-pink .theme-switch { background: #fff2f5; border-color: #ffd6e0; }
+        .theme-pink .theme-switch:hover { background: #ffe6ec; }
+        .theme-switch-label { font-size: 0.92rem; font-weight: 500; color: #1e2b3c; user-select: none; }
+        .theme-toggle-btn { width: 34px; height: 34px; border-radius: 50%; background: #2f5778; box-shadow: 0 2px 6px rgba(47,87,120,0.35); transition: background-color 0.2s, transform 0.1s; }
+        .theme-pink .theme-toggle-btn { background: #ff7f9f; box-shadow: 0 2px 6px rgba(255,127,159,0.45); }
+        .theme-switch:hover .theme-toggle-btn { transform: scale(1.06); }
+        .theme-switch:active .theme-toggle-btn { transform: scale(0.94); }
+        .dock-settings { margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.07); border-radius: 12px; display: none; }
         .dock-settings.visible { display: block; }
         .dock-color-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .dock-follow-row { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
         #guideLineContainer { display: none; }
         #keyStyleContainer {
             margin-top: 10px;
-            margin-left: 20px;
             padding: 8px 12px;
-            background: rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.07);
             border-radius: 12px;
             display: none;
         }
@@ -148,10 +161,14 @@
 </head>
 <body>
 <div class="editor-container">
-    <div class="theme-toggle-wrapper">
-        <div class="theme-toggle-btn" id="themeToggle" title="切换主题"></div>
+    <div class="editor-header">
+        <div class="theme-switch" id="themeToggle" title="切换主题">
+            <span class="theme-toggle-btn"></span>
+            <span class="theme-switch-label">切换主题</span>
+        </div>
     </div>
 
+    <div class="editor-body">
     <div class="preview-area">
         <div class="main-title" id="mainTitle">
             <span id="editableName" class="editable-name">你</span> 的 Hitboard Air。
@@ -293,7 +310,7 @@
                 <h3>裁剪辅助线：</h3>
                 <div class="radio-group">
                     <div class="radio-row">
-                        <input type="radio" name="guideLine" id="guideNone" value="none" checked>
+                        <input type="radio" name="guideLine" id="guideNone" value="none">
                         <label for="guideNone">不开启辅助线</label>
                     </div>
                     <div class="radio-row">
@@ -309,7 +326,7 @@
                         <label for="guideSeparate">上下壁纸分别使用环形/方形辅助线</label>
                     </div>
                     <div class="radio-row">
-                        <input type="radio" name="guideLine" id="guideTopCircle" value="topCircle">
+                        <input type="radio" name="guideLine" id="guideTopCircle" value="topCircle" checked>
                         <label for="guideTopCircle">上方壁纸使用环形辅助线，下方壁纸不开启辅助线（高兼容性）</label>
                     </div>
                 </div>
@@ -360,6 +377,7 @@
         <div class="footer-note">
             科学街霸，从输入设备做起。
         </div>
+    </div>
     </div>
 </div>
 <div class="designer-credit">Designed by 搅局 · 双主题版</div>
@@ -450,12 +468,24 @@
         { dx: -43.07, dy: 38.33 }, { dx: -106.58, dy: 12.39 }
     ];
     const explorerPhys = explorerOffsets.map(off => ({ x: centerPhysX + off.dx, y: centerPhysY + off.dy }));
+    // ── 拨片（三角形按键）参数：直接量自公版盖板图 ──────────────────────────────
+    // 量取方式：以图中 23.5mm 圆键（r=107.2px）与 26.5mm 圆键（r=120.6px）标定比例尺
+    // = 9.118 px/mm（两者互差仅 0.2%）。再提取两个拨片的轮廓中心线，按
+    // 「圆角等边三角形」模型（内接三角形 ⊕ 半径 r 的圆盘）拟合：
+    //   UP(即 W)  rms 0.26px，LS(即 Shift) rms 0.24px，两片尺寸一致 → 同一零件。
+    // 结果：内接边长 12.5mm、圆角半径 5.85mm（targetSize = 12.5 + 2×5.85 = 24.25mm）
+    //       三角形朝向：W = 32.4°，Shift = 87.6°（两片并非相差 180°，实测约 175°）
+    const PADDLE_SIZE = 24.25 * SCALE;      // 原 28 * SCALE
+    const PADDLE_CORNER_RADIUS = 5.85 * SCALE;  // 原 5 * SCALE
+    const PADDLE_ANGLE_W = 32.4;            // 原 55
+    const PADDLE_ANGLE_SHIFT = 87.6;        // 原 -15
+
     const explorerButtons = [];
     explorerButtons.push({ cx: Math.round(explorerPhys[0].x * SCALE), cy: Math.round(outerH - explorerPhys[0].y * SCALE), r: buttonRadii[23], shape: 'circle' });
     explorerButtons.push({ cx: Math.round(explorerPhys[1].x * SCALE), cy: Math.round(outerH - explorerPhys[1].y * SCALE), r: buttonRadii[23], shape: 'circle' });
     explorerButtons.push({ cx: Math.round(explorerPhys[2].x * SCALE), cy: Math.round(outerH - explorerPhys[2].y * SCALE), r: buttonRadii[23], shape: 'circle' });
-    explorerButtons.push({ cx: Math.round(explorerPhys[3].x * SCALE), cy: Math.round(outerH - explorerPhys[3].y * SCALE), size: 28 * SCALE, cornerRadius: 5 * SCALE, angle: 55, shape: 'triangle' });
-    explorerButtons.push({ cx: Math.round(explorerPhys[4].x * SCALE), cy: Math.round(outerH - explorerPhys[4].y * SCALE), size: 28 * SCALE, cornerRadius: 5 * SCALE, angle: -15, shape: 'triangle' });
+    explorerButtons.push({ cx: Math.round(explorerPhys[3].x * SCALE), cy: Math.round(outerH - explorerPhys[3].y * SCALE), size: PADDLE_SIZE, cornerRadius: PADDLE_CORNER_RADIUS, angle: PADDLE_ANGLE_W, shape: 'triangle' });
+    explorerButtons.push({ cx: Math.round(explorerPhys[4].x * SCALE), cy: Math.round(outerH - explorerPhys[4].y * SCALE), size: PADDLE_SIZE, cornerRadius: PADDLE_CORNER_RADIUS, angle: PADDLE_ANGLE_SHIFT, shape: 'triangle' });
 
     const buttons = [...baseButtons, smallHandLeft, smallHandDown, smallHandRight, ...explorerButtons];
     const MICRO_INDICES = [15, 16];
@@ -474,7 +504,7 @@
     let directionLayout = 'explorer';   // 默认七星布局
     let keyStyle = 'triangle';
     let extraKeySelect = 'both';
-    let guideLineMode = 'none';
+    let guideLineMode = 'topCircle';   // 默认：上方壁纸用环形辅助线，下方不开启（高兼容性）
 
     const alphaCase = 0.9, alphaPanel = 0.85, alphaButton = 0.95, alphaDock = 0.89;
 
@@ -713,6 +743,7 @@
     guideSquare.addEventListener('change', updateGuideLineMode);
     guideSeparate.addEventListener('change', updateGuideLineMode);
     guideTopCircle.addEventListener('change', updateGuideLineMode);
+    updateGuideLineMode();   // 以 HTML 里的 checked 为初始值（默认「上环形 + 下无辅助线」）
 
     function applyDockFollow() {
         if (dockFollowCheck.checked) { dockColor = caseColor; dockInput.value = caseColor; draw(); }
@@ -978,7 +1009,7 @@
         wallpaperStatus.innerText = '未设置壁纸';
         paletteContainer.style.display = 'none';
         guideLineContainer.style.display = 'none';
-        guideNone.checked = true; updateGuideLineMode();
+        guideTopCircle.checked = true; updateGuideLineMode();   // 复位回默认辅助线
         draw();
     });
 
@@ -1037,6 +1068,17 @@
 
         const positions = [{ left: 20*10, bottom: 108*10 }, { left: 20*10, bottom: 7.8*10 }];
         const productCenterX_mm = 130, productCenterY_mm = 50;
+
+        // 顶部提示文字：放在上方壁纸（positions[0]）顶边之上的 A4 留白区里
+        const tipGapPx = exportCanvas.height - positions[0].bottom - innerH;   // 上方壁纸顶边 y
+        const tipFontSize = Math.min(48, Math.max(24, Math.round(tipGapPx * 0.62)));
+        eCtx.save();
+        eCtx.font = `bold ${tipFontSize}px "Microsoft YaHei", sans-serif`;
+        eCtx.fillStyle = '#1e2b3c';
+        eCtx.textAlign = 'center';
+        eCtx.textBaseline = 'middle';
+        eCtx.fillText('打印要求：1.平铺壁纸在 A4 画布。2.不要开启「缩放以适合介质」。', exportCanvas.width / 2, tipGapPx / 2);
+        eCtx.restore();
 
         positions.forEach((pos, idx) => {
             const leftPx = pos.left, bottomPx = pos.bottom, topPx = exportCanvas.height - bottomPx - innerH;
